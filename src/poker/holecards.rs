@@ -19,8 +19,8 @@ impl HoleCards {
         self.cards.is_empty()
     }
 
-    pub fn get_cards(&self) -> &Vec<Card> {
-        &self.cards
+    pub fn get_cards(&self) -> Vec<Card> {
+        self.cards.clone()
     }
 
     pub fn get_all() -> Vec<Self> {

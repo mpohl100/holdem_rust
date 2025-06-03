@@ -3,7 +3,8 @@ use std::fmt;
 
 use poker::card::Card;
 use poker::holecards::HoleCards;
-use poker::hand::{Hand, get_best_hand};
+use poker::hand::Hand;
+use poker::made_hand::get_best_hand;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Street {
@@ -57,8 +58,8 @@ impl Board {
         self.cards.push(river);
     }
 
-    pub fn get_cards(&self) -> &Vec<Card> {
-        &self.cards
+    pub fn get_cards(&self) -> Vec<Card> {
+        self.cards.clone()
     }
 
     pub fn get_best_holdings(&self) -> Vec<HoleCards> {
