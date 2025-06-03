@@ -130,6 +130,6 @@ impl Card {
     }
 
     pub fn get_all() -> Vec<Self> {
-        (0..).map(|i| Self::from_nb(i).unwrap()).collect()
+        (0..52).map(|i| Self::from_nb(i).unwrap()).collect()
     }
 }
