@@ -31,8 +31,21 @@ jobs:
         run: cargo clean --doc
       - name: Build docs
         run: cargo doc --no-deps
-      - name: Add redirect
-        run: echo '<meta http-equiv="refresh" content="0;url=holdem_rust/index.html">' > target/doc/index.html
+      - name: Add documentation landing page
+        run: |
+          cat > target/doc/index.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <meta http-equiv="refresh" content="0;url=/holdem_rust/holdem_rust/index.html">
+              <title>holdem_rust documentation</title>
+            </head>
+            <body>
+              <p><a href="/holdem_rust/holdem_rust/index.html">Open the Rust API documentation</a></p>
+            </body>
+          </html>
+          EOF
       - name: Remove lock file
         run: rm target/doc/.lock
       - name: Upload artifact
