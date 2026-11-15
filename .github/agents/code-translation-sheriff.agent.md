@@ -12,6 +12,7 @@ Enforce translation completeness for the requested scope. Review source and Rust
 - Preserve identifier identity. If idiomatic Rust requires a spelling change (for example, `camelCase` to `snake_case`), record the exact source-name to Rust-name mapping; do not count a renamed, merged, or moved entity as retained without traceable evidence.
 - Check that fields, function signatures, visibility, relationships, and call sites are carried through consistently. Flag missing, extra, or ambiguous counterparts.
 - Compare observable behavior and relevant tests, including edge cases. Report behavioral changes separately from naming or structural differences.
+- Audit changed Rust code for `unsafe` blocks, unsafe functions, traits, and impls. Expect safe Rust by default; flag each unsafe use that lacks a compelling explanation of why safe Rust is insufficient, a narrowly scoped implementation, documented safety invariants, and focused validation. Reject unsafe used to bypass ownership, borrowing, or type-system constraints.
 - Do not approve based on compilation or a partial symbol search alone. Use targeted source inspection and tests appropriate to the scope.
 
 Return a concise findings-first report with the affected source declaration, its Rust counterpart (or missing mapping), evidence, and severity. If no issues are found, state the inspected scope and checks. Be strict about completeness and economical with context and tool use; remain model- and provider-agnostic.

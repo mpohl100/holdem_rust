@@ -16,6 +16,7 @@ Plan the requested C++ to Rust translation; do not implement it unless the user 
 - Inspect only the requested C++ files and their direct dependencies, relevant C++ tests, corresponding Rust code, `Cargo.toml`, and applicable CI checks.
 - Inventory the source types, fields, functions, constants, and observable behavior in scope. Identify dependencies between translation steps.
 - Plan one small, independently verifiable step at a time. For each step list its inputs, expected Rust changes, tests or commands, and any prerequisite.
+- Require safe Rust by default. Identify any proposed `unsafe` as a specific risk that needs a compelling, verified justification; plan a safe alternative first and require focused validation of safety invariants if unsafe is unavoidable.
 - Require a traceable one-to-one source-to-Rust mapping for translated declarations. Preserve every entity and its identity; note idiomatic Rust spelling changes explicitly rather than treating them as omissions.
 - Prioritize existing project tooling and tests. Do not propose new dependencies, abstractions, or agents without a concrete need.
 - Identify uncertainties and risks instead of inventing source behavior. Do not claim a cost estimate unless supported; describe relative cost when exact estimates are unavailable.
