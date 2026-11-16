@@ -65,7 +65,8 @@ impl DecisionEngine {
 
 /// Gets the amount to call from an option list.
 ///
-/// This maps C++ free function `getToCall` to `get_to_call`.
+/// This maps C++ free function `getToCall` (using
+/// `std::ranges::find_if`) to `get_to_call`.
 pub fn get_to_call(options: &crate::dealer::Options) -> Stack {
     options
         .options

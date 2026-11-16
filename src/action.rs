@@ -256,7 +256,8 @@ impl HandAction for SeatingAction {
 pub struct ShowdownAction {
     /// Player snapshot; maps to the inherited C++ `HandAction::player`.
     pub player: Player,
-    /// The evaluated hand, or `None` when the player mucks; maps to C++ `hand`.
+    /// The evaluated hand, or `None` when the player mucks; maps to the
+    /// optional-valued C++ `std::optional<Hand> hand`.
     pub hand: Option<Hand>,
 }
 

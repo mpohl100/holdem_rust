@@ -16,6 +16,7 @@ pub mod deck52;
 pub mod hand;
 pub mod hand_history;
 pub mod hand_range;
+pub mod holdem_hand;
 pub mod hole_cards;
 pub mod nlhe;
 pub mod par;
@@ -23,3 +24,8 @@ pub mod player;
 pub mod pot;
 pub mod rated_hand;
 pub mod stack;
+
+/// Prints the greeting implemented by `cpp_code/src/Lib.cpp`.
+pub fn say_hello(name: String) {
+    println!("Hello, {name}!");
+}

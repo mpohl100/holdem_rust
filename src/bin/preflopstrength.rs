@@ -12,13 +12,15 @@ fn main() -> ExitCode {
             print!("{}", help_text("preflopstrength"));
             ExitCode::SUCCESS
         }
-        Ok(CommandLine::Run { number_of_hands: _ }) => match calculate_preflop_strengths() {
-            Ok(()) => ExitCode::SUCCESS,
-            Err(error) => {
-                eprintln!("Failed to calculate preflop strengths: {error}");
-                ExitCode::from(1)
+        Ok(CommandLine::Run { number_of_hands }) => {
+            match calculate_preflop_strengths(number_of_hands) {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(error) => {
+                    eprintln!("Failed to calculate preflop strengths: {error}");
+                    ExitCode::from(1)
+                }
             }
-        },
+        }
         Err(error) => {
             eprintln!("Error in command line: {error}");
             ExitCode::from(1)
