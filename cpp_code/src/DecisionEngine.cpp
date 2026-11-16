@@ -7,7 +7,7 @@ namespace game52{
 
 Stack getToCall(Options const& options)
 {
-    auto toCallIt = std::find_if(options.options.begin(), options.options.end(), [](const auto& opt){ return opt.first == Decision::Call;});
+    auto toCallIt = std::ranges::find_if(options.options, [](const auto& opt){ return opt.first == Decision::Call;});
     if(toCallIt == options.options.end())
         return Stack(0);
     return toCallIt->second.first;

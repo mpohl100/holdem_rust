@@ -19,6 +19,7 @@
 
 #include <iterator>
 #include <algorithm>
+#include <stdint.h>
 
 namespace detail
 {
@@ -457,10 +458,10 @@ count_each_combination(UInt d1, UInt d2)
 }
 
 template <class BidirIter>
-std::uintmax_t
+uintmax_t
 count_each_combination(BidirIter first, BidirIter mid, BidirIter last)
 {
-    return count_each_combination<std::uintmax_t>
+    return count_each_combination<uintmax_t>
                           (std::distance(first, mid), std::distance(mid, last));
 }
 
@@ -504,10 +505,10 @@ count_each_permutation(UInt d1, UInt d2)
 }
 
 template <class BidirIter>
-std::uintmax_t
+uintmax_t
 count_each_permutation(BidirIter first, BidirIter mid, BidirIter last)
 {
-    return count_each_permutation<std::uintmax_t>
+    return count_each_permutation<uintmax_t>
                           (std::distance(first, mid), std::distance(mid, last));
 }
 
@@ -599,10 +600,10 @@ count_each_circular_permutation(UInt d1, UInt d2)
 }
 
 template <class BidirIter>
-std::uintmax_t
+uintmax_t
 count_each_circular_permutation(BidirIter first, BidirIter mid, BidirIter last)
 {
-    return count_each_circular_permutation<std::uintmax_t>
+    return count_each_circular_permutation<uintmax_t>
                           (std::distance(first, mid), std::distance(mid, last));
 }
 
@@ -849,10 +850,10 @@ count_each_reversible_permutation(UInt d1, UInt d2)
 }
 
 template <class BidirIter>
-std::uintmax_t
+uintmax_t
 count_each_reversible_permutation(BidirIter first, BidirIter mid, BidirIter last)
 {
-    return count_each_reversible_permutation<std::uintmax_t>
+    return count_each_reversible_permutation<uintmax_t>
                           (std::distance(first, mid), std::distance(mid, last));
 }
 
@@ -926,10 +927,10 @@ count_each_reversible_circular_permutation(UInt d1, UInt d2)
 }
 
 template <class BidirIter>
-std::uintmax_t
+uintmax_t
 count_each_reversible_circular_permutation(BidirIter first, BidirIter mid,
                                                BidirIter last)
 {
-    return count_each_reversible_circular_permutation<std::uintmax_t>
+    return count_each_reversible_circular_permutation<uintmax_t>
                           (std::distance(first, mid), std::distance(mid, last));
 }
