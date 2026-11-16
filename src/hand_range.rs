@@ -327,14 +327,15 @@ pub fn print_preflop_strengths() -> Result<(), HandRangeError> {
 
 /// Calculates and prints simulated preflop scores for all hole-card holdings.
 ///
-/// C++ mapping: `calculatePreflopStrengths()`. Hole-card enumeration is
-/// reproduced in card-number order without `Card52::nb()`.
+/// C++ mapping: `calculatePreflopStrengths(int nbHands)`. `nb_hands` sets the
+/// number of randomly sampled preflop boards per holding. Hole-card
+/// enumeration is reproduced in card-number order without `Card52::nb()`.
 ///
 /// # Errors
 ///
 /// Returns an error if a simulated rating cannot be evaluated or the system
 /// clock is unavailable.
-pub fn calculate_preflop_strengths() -> Result<(), HandRangeError> {
+pub fn calculate_preflop_strengths(nb_hands: i32) -> Result<(), HandRangeError> {
     let cards = range_all_cards();
     let board = crate::board::Board::default();
     let mut results = Vec::with_capacity(cards.len() * (cards.len() - 1));
@@ -344,7 +345,7 @@ pub fn calculate_preflop_strengths() -> Result<(), HandRangeError> {
                 continue;
             }
             let holding = HoleCards::new(*first, *second);
-            let rating = RatedHand::new(&holding, &board);
+            let rating = RatedHand::with_preflop_board_samples(&holding, &board, nb_hands as usize);
             results.push((rating.get_simulated_score()?, holding));
         }
     }

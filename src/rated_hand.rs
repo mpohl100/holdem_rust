@@ -18,6 +18,7 @@ use crate::board::Board;
 use crate::card52::{Card52, Rank52, Suit};
 use crate::combinatorics;
 use crate::hand::{AllDraws, Hand, HandError, HandRank52, try_get_best_hand};
+use crate::holdem_hand::{HoldemHand52, HoldemHandRank52};
 use crate::hole_cards::HoleCards;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -48,15 +49,28 @@ impl Default for RatedHand {
 }
 
 impl RatedHand {
-    /// Creates a rating request for the supplied hole cards and board.
+    /// Creates a rating request for the supplied cards using the source default
+    /// of 1,000 preflop boards.
     ///
-    /// C++ mapping: `RatedHand(HoleCards const&, Board const&)`.
+    /// This convenience constructor preserves the pre-existing Rust API.
     #[must_use]
     pub fn new(hole_cards: &HoleCards, board: &Board) -> Self {
+        Self::with_preflop_board_samples(hole_cards, board, 1000)
+    }
+
+    /// Creates a rating request with an explicit preflop sample count.
+    ///
+    /// C++ mapping: `RatedHand(HoleCards const&, Board const&, size_t)`.
+    #[must_use]
+    pub fn with_preflop_board_samples(
+        hole_cards: &HoleCards,
+        board: &Board,
+        preflop_board_samples: usize,
+    ) -> Self {
         Self {
             hole_cards: hole_cards.clone(),
             board: board.clone(),
-            preflop_board_samples: 1000,
+            preflop_board_samples,
         }
     }
 
@@ -75,9 +89,9 @@ impl RatedHand {
     /// Returns the average simulated made-hand score over completed boards.
     ///
     /// C++ mapping: `RatedHand::getSimulatedScore()`. The C++ code attempted
-    /// `set_intersection` into an empty vector, which is invalid; this safe
-    /// translation computes the intersection by membership and sorts ranks
-    /// descending before applying the same one-card/two-card kicker formula.
+    /// The C++ implementation evaluates the best Hold'em hand over all hole
+    /// and board cards, then intersects its sorted card list with the sorted
+    /// hole cards before applying the one-card/two-card kicker formula.
     ///
     /// # Errors
     ///
@@ -95,16 +109,35 @@ impl RatedHand {
         }
         let mut sum = 0.0;
         for board in &boards {
-            let hand = Hand::new(self.hole_cards.clone(), board.clone());
-            let made_hand = try_get_best_hand(&hand)?;
-            let mut score = f64::from(made_hand.get_rank() as i32);
-            let hole_cards = self.hole_cards.get_cards();
-            let mut intersection: Vec<Rank52> = made_hand
-                .get_cards()
-                .iter()
-                .filter(|card| hole_cards.contains(card))
-                .map(|card| card.rank())
-                .collect();
+            let made_hand = HoldemHand52::from_hole_cards(&self.hole_cards, board);
+            let mut score = f64::from(match made_hand.get_rank() {
+                HoldemHandRank52::HighCard => 0,
+                HoldemHandRank52::Pair => 1,
+                HoldemHandRank52::TwoPair => 2,
+                HoldemHandRank52::Trips => 3,
+                HoldemHandRank52::Straight => 4,
+                HoldemHandRank52::Flush => 5,
+                HoldemHandRank52::FullHouse => 6,
+                HoldemHandRank52::Quads => 7,
+                HoldemHandRank52::StraightFlush => 8,
+            });
+            let mut hand_cards = made_hand.get_cards();
+            let mut hole_cards = self.hole_cards.get_cards().to_vec();
+            hand_cards.sort_unstable();
+            hole_cards.sort_unstable();
+            let mut intersection = Vec::new();
+            let (mut hand_index, mut hole_index) = (0, 0);
+            while hand_index < hand_cards.len() && hole_index < hole_cards.len() {
+                match hand_cards[hand_index].cmp(&hole_cards[hole_index]) {
+                    std::cmp::Ordering::Less => hand_index += 1,
+                    std::cmp::Ordering::Greater => hole_index += 1,
+                    std::cmp::Ordering::Equal => {
+                        intersection.push(hand_cards[hand_index].rank());
+                        hand_index += 1;
+                        hole_index += 1;
+                    }
+                }
+            }
             intersection.sort_unstable_by(|left, right| right.cmp(left));
             match intersection.as_slice() {
                 [rank] => score += f64::from(rank_value(*rank)) / 13.0 / 13.0,
@@ -298,6 +331,84 @@ mod tests {
     use crate::board::Board;
     use crate::card52::{Card52, Rank52, Suit};
     use crate::hole_cards::HoleCards;
+
+    /// Verifies made-hand scoring and the zero draw score on a complete board.
+    #[test]
+    fn score_combines_made_hand_and_river_draw_scores() {
+        let hole_cards = HoleCards::new(
+            Card52::new(Rank52::Nine, Suit::Clubs),
+            Card52::new(Rank52::Eight, Suit::Diamonds),
+        );
+        let mut board = Board::default();
+        board.deal_flop(vec![
+            Card52::new(Rank52::Ace, Suit::Hearts),
+            Card52::new(Rank52::Ace, Suit::Diamonds),
+            Card52::new(Rank52::King, Suit::Clubs),
+        ]);
+        board.deal_turn(Card52::new(Rank52::Queen, Suit::Spades));
+        board.deal_river(Card52::new(Rank52::Deuce, Suit::Hearts));
+
+        assert_eq!(RatedHand::new(&hole_cards, &board).get_score(), Ok(336.0));
+    }
+
+    /// Checks the simulated category and hole-card kickers for a royal flush.
+    #[test]
+    fn simulated_river_score_includes_hole_card_rank_values() {
+        let hole_cards = HoleCards::new(
+            Card52::new(Rank52::Ace, Suit::Hearts),
+            Card52::new(Rank52::King, Suit::Hearts),
+        );
+        let mut board = Board::default();
+        board.deal_flop(vec![
+            Card52::new(Rank52::Queen, Suit::Hearts),
+            Card52::new(Rank52::Jack, Suit::Hearts),
+            Card52::new(Rank52::Ten, Suit::Hearts),
+        ]);
+        board.deal_turn(Card52::new(Rank52::Deuce, Suit::Clubs));
+        board.deal_river(Card52::new(Rank52::Three, Suit::Diamonds));
+
+        let expected = 8.0 + 12.0 / 13.0 + 11.0 / 13.0 / 13.0;
+        assert_eq!(
+            RatedHand::new(&hole_cards, &board).get_simulated_score(),
+            Ok(expected)
+        );
+    }
+
+    /// Confirms explicit preflop sample counts and the zero-sample error.
+    #[test]
+    fn preflop_sample_count_controls_completion_boards() {
+        let hole_cards = HoleCards::new(
+            Card52::new(Rank52::Ace, Suit::Hearts),
+            Card52::new(Rank52::King, Suit::Diamonds),
+        );
+        let board = Board::default();
+        let rating = RatedHand::with_preflop_board_samples(&hole_cards, &board, 3);
+        assert_eq!(rating.get_boards().unwrap().len(), 3);
+
+        let no_samples = RatedHand::with_preflop_board_samples(&hole_cards, &board, 0);
+        assert_eq!(
+            no_samples.get_simulated_score(),
+            Err(crate::hand::HandError::NoCompletionBoards)
+        );
+    }
+
+    /// Verifies all turn/river combinations are considered from the flop.
+    #[test]
+    fn flop_generates_every_two_card_completion() {
+        let hole_cards = HoleCards::new(
+            Card52::new(Rank52::Ace, Suit::Hearts),
+            Card52::new(Rank52::King, Suit::Diamonds),
+        );
+        let mut board = Board::default();
+        board.deal_flop(vec![
+            Card52::new(Rank52::Queen, Suit::Clubs),
+            Card52::new(Rank52::Jack, Suit::Spades),
+            Card52::new(Rank52::Ten, Suit::Hearts),
+        ]);
+        let rating = RatedHand::new(&hole_cards, &board);
+
+        assert_eq!(rating.get_boards().unwrap().len(), 47 * 46 / 2);
+    }
 
     /// Verifies the source score path on a complete board.
     #[test]
