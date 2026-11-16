@@ -1,4 +1,7 @@
 add_subdirectory(par)
+add_subdirectory(regret)
+
+find_package(range-v3 REQUIRED)
 
 set( LIB_SOURCES 
     Card52.cpp
@@ -12,6 +15,7 @@ set( LIB_SOURCES
     DecisionEngine.cpp
     Board.cpp
     Hand.cpp
+    HoldemHand.cpp
     Action.cpp
     Dealer.cpp
     HandRange.cpp
@@ -21,4 +25,4 @@ set( LIB_SOURCES
 set( LIBNAME game)
 
 add_library( ${LIBNAME} SHARED ${LIB_SOURCES} )
-target_link_libraries( ${LIBNAME} CONAN_PKG::range-v3)
+target_link_libraries( ${LIBNAME} range-v3::range-v3)
